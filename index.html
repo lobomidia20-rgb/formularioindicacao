@@ -695,12 +695,7 @@
         });
         ok = res.ok;
       }catch(_){ ok = false; }
-      if(!ok && navigator.sendBeacon){
-        try{
-          const blob = new Blob([JSON.stringify(payload)], {type:'application/json'});
-          ok = navigator.sendBeacon(url, blob);
-        }catch(_){ ok = false; }
-      }
+      // tentativa única para evitar logs duplicados
       // sem terceira tentativa para evitar múltiplos erros no console
       msg.textContent = ok ? 'Indicações enviadas! Em breve a equipe da Lobo entrará em contato.' : 'Não consegui enviar agora. Tente novamente mais tarde.';
       msg.style.color = ok ? '#baffda' : '#ffb3b3';
