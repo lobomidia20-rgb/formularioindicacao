@@ -661,12 +661,13 @@
       const container = document.getElementById('indicados-container');
       const rows = container.querySelectorAll('.indicado-row');
       let preenchidos = 0;
+      const indicados = [];
 
       rows.forEach((row) => {
         const inputs = row.querySelectorAll('input');
         const n = inputs[0].value.trim();
         const t = inputs[1].value.trim();
-        if(n && t){ preenchidos++; }
+        if(n && t){ preenchidos++; indicados.push({ nome: n, telefone: t }); }
       });
 
       if(preenchidos < 3){
@@ -674,15 +675,31 @@
         msg.style.color = '#ffb3b3';
         return false;
       }
-
-      // Aqui você pode integrar com n8n / backend depois:
-      // montar objeto com indicante + indicados e enviar via fetch.
-
-      msg.textContent = 'Indicações enviadas! Em breve a equipe da Lobo entrará em contato.';
-      msg.style.color = '#baffda';
+      const payload = {
+        indicante: { nome, whatsapp: zap },
+        indicados,
+        meta: { submittedAt: new Date().toISOString(), userAgent: navigator.userAgent }
+      };
+      msg.textContent = 'Enviando suas indicações...';
+      msg.style.color = '#a6ffd0';
+      const btn = document.querySelector('#indicacaoForm button[type="submit"]');
+      if(btn){ btn.disabled = true; }
+      fetch('https://n8n-n8n-webhook.nyrnfd.easypanel.host/webhook/indicacaositelobosolucoes',{
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(payload)
+      }).then(async (res)=>{
+        const ok = res.ok;
+        msg.textContent = ok ? 'Indicações enviadas! Em breve a equipe da Lobo entrará em contato.' : 'Não consegui enviar agora. Tente novamente mais tarde.';
+        msg.style.color = ok ? '#baffda' : '#ffb3b3';
+      }).catch(()=>{
+        msg.textContent = 'Erro ao enviar. Verifique sua conexão e tente novamente.';
+        msg.style.color = '#ffb3b3';
+      }).finally(()=>{
+        if(btn){ btn.disabled = false; }
+      });
       return false;
     }
   </script>
-  
 </body>
 </html>
