@@ -646,7 +646,7 @@
     for(let i=0;i<3;i++){ addIndicado(); }
     updateAddButtonState();
 
-    function submitIndicacao(e){
+    async function submitIndicacao(e){
       e.preventDefault();
       const nome = document.getElementById('indicanteNome').value.trim();
       const zap = document.getElementById('indicanteZap').value.trim();
@@ -684,20 +684,41 @@
       msg.style.color = '#a6ffd0';
       const btn = document.querySelector('#indicacaoForm button[type="submit"]');
       if(btn){ btn.disabled = true; }
-      fetch('https://n8n-n8n-webhook.nyrnfd.easypanel.host/webhook/indicacaositelobosolucoes',{
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify(payload)
-      }).then(async (res)=>{
-        const ok = res.ok;
-        msg.textContent = ok ? 'Indicações enviadas! Em breve a equipe da Lobo entrará em contato.' : 'Não consegui enviar agora. Tente novamente mais tarde.';
-        msg.style.color = ok ? '#baffda' : '#ffb3b3';
-      }).catch(()=>{
-        msg.textContent = 'Erro ao enviar. Verifique sua conexão e tente novamente.';
-        msg.style.color = '#ffb3b3';
-      }).finally(()=>{
-        if(btn){ btn.disabled = false; }
-      });
+      const url = 'https://n8n-n8n-webhook.nyrnfd.easypanel.host/webhook/indicacaositelobosolucoes';
+      let ok = false;
+      try{
+        const res = await fetch(url,{
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify(payload),
+          mode:'cors'
+        });
+        ok = res.ok;
+      }catch(_){ ok = false; }
+      if(!ok && navigator.sendBeacon){
+        try{
+          const blob = new Blob([JSON.stringify(payload)], {type:'application/json'});
+          ok = navigator.sendBeacon(url, blob);
+        }catch(_){ ok = false; }
+      }
+      if(!ok){
+        try{
+          const form = new URLSearchParams();
+          form.set('indicante_nome', nome);
+          form.set('indicante_whatsapp', zap);
+          form.set('indicados', JSON.stringify(indicados));
+          await fetch(url,{
+            method:'POST',
+            headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+            body: form.toString(),
+            mode:'no-cors'
+          });
+          ok = true;
+        }catch(_){ ok = false; }
+      }
+      msg.textContent = ok ? 'Indicações enviadas! Em breve a equipe da Lobo entrará em contato.' : 'Não consegui enviar agora. Tente novamente mais tarde.';
+      msg.style.color = ok ? '#baffda' : '#ffb3b3';
+      if(btn){ btn.disabled = false; }
       return false;
     }
   </script>
