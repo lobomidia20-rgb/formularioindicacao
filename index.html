@@ -701,21 +701,7 @@
           ok = navigator.sendBeacon(url, blob);
         }catch(_){ ok = false; }
       }
-      if(!ok){
-        try{
-          const form = new URLSearchParams();
-          form.set('indicante_nome', nome);
-          form.set('indicante_whatsapp', zap);
-          form.set('indicados', JSON.stringify(indicados));
-          await fetch(url,{
-            method:'POST',
-            headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
-            body: form.toString(),
-            mode:'no-cors'
-          });
-          ok = true;
-        }catch(_){ ok = false; }
-      }
+      // sem terceira tentativa para evitar múltiplos erros no console
       msg.textContent = ok ? 'Indicações enviadas! Em breve a equipe da Lobo entrará em contato.' : 'Não consegui enviar agora. Tente novamente mais tarde.';
       msg.style.color = ok ? '#baffda' : '#ffb3b3';
       if(btn){ btn.disabled = false; }
